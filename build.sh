@@ -9,7 +9,7 @@ echo ">>> 构建前端..."
 cd frontend
 pnpm install --ignore-scripts 2>/dev/null
 pnpm build-only
-rm -rf ../web/vue/assets ../web/vue/favicon.ico ../web/vue/index.html
+mkdir -p ../web/vue
 cp -r dist/* ../web/vue/
 echo "前端构建完成"
 
