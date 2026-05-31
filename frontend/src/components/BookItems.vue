@@ -10,12 +10,16 @@
         <div class="delete-btn" v-if="!isSearch" @click.stop="handleDelete(book)">
           <el-icon><Delete /></el-icon>
         </div>
+        <div class="change-source-btn" v-if="!isSearch" @click.stop="handleChangeSource(book)">
+          <el-icon><Refresh /></el-icon>
+        </div>
         <div class="cover-img">
           <img
             class="cover"
             :src="getCover(book)"
             :key="book.coverUrl"
             @error.once="proxyImage"
+            @error="handleImageError"
             alt=""
             loading="lazy"
           />
@@ -45,6 +49,9 @@
           </div>
           <div class="intro" v-if="isSearch">{{ book.intro }}</div>
 
+          <div class="source-name" v-if="!isSearch" style="font-size:12px;color:#999;margin-top:2px">
+            来源：{{ (book as Book).originName }}
+          </div>
           <div class="dur-chapter" v-if="!isSearch">
             已读：{{ (book as Book).durChapterTitle }}
           </div>
@@ -57,23 +64,34 @@
 <script setup lang="ts">
 import type { Book, SeachBook } from '@/book'
 import { dateFormat, isLegadoUrl } from '../utils/utils'
-import { Delete } from '@element-plus/icons-vue'
+import { Delete, Refresh } from '@element-plus/icons-vue'
 import API from '@api'
 const props = defineProps<{
   books: Array<Book | SeachBook>
   isSearch: boolean
 }>()
 
-const emit = defineEmits(['bookClick', 'deleteBook'])
+const emit = defineEmits(['bookClick', 'deleteBook', 'changeSource'])
 const handleClick = (book: Book | SeachBook) => emit('bookClick', book)
 const handleDelete = (book: Book | SeachBook) => emit('deleteBook', book)
+const handleChangeSource = (book: Book | SeachBook) => emit('changeSource', book)
 const getCover = ({ bookUrl, coverUrl }: Book | SeachBook) => {
   if (coverUrl === undefined) return API.getProxyCoverUrl(bookUrl)
   return isLegadoUrl(coverUrl) ? API.getProxyCoverUrl(coverUrl) : coverUrl
 }
+const defaultCover = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 112" fill="#eee">' +
+  '<rect width="84" height="112"/><text x="42" y="56" text-anchor="middle" fill="#aaa" font-size="14">暂无封面</text></svg>'
+)
 const proxyImage = (evt: Event) => {
   const target = evt.target as HTMLImageElement
-  target.src = API.getProxyCoverUrl(target.src)
+  if (!target.src.startsWith('data:')) {
+    target.src = API.getProxyCoverUrl(target.src)
+  }
+}
+const handleImageError = (evt: Event) => {
+  const target = evt.target as HTMLImageElement
+  target.src = defaultCover
 }
 
 const subJustify = computed(() =>
@@ -186,12 +204,30 @@ const subJustify = computed(() =>
       transition: opacity 0.2s;
     }
 
-    .book:hover .delete-btn {
+    .change-source-btn {
+      position: absolute;
+      top: 4px;
+      right: 30px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #999;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .book:hover .delete-btn,
+    .book:hover .change-source-btn {
       opacity: 0.7;
     }
 
     .delete-btn:hover {
       color: #e74c3c;
+      opacity: 1;
+    }
+
+    .change-source-btn:hover {
+      color: #409eff;
       opacity: 1;
     }
   }

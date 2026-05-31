@@ -81,9 +81,26 @@
         :books="books"
         @bookClick="handleBookClick"
         @deleteBook="handleDeleteBook"
+        @changeSource="handleChangeSource"
         :isSearch="isSearching"
       ></book-items>
     </div>
+
+    <!-- 换源对话框 -->
+    <el-dialog v-model="changeSourceVisible" title="切换书源" width="600px">
+      <el-input v-model="changeSourceKey" placeholder="搜索其他书源..."
+        clearable style="margin-bottom:12px" @keyup.enter="searchChangeSource" />
+      <el-table :data="changeSourceResults" style="width:100%" max-height="400" stripe
+        @row-click="selectChangeSource">
+        <el-table-column prop="originName" label="书源" width="120" />
+        <el-table-column prop="name" label="书名" min-width="140" />
+        <el-table-column prop="author" label="作者" width="100" />
+        <el-table-column prop="latestChapterTitle" label="最新章节" min-width="160" show-overflow-tooltip />
+      </el-table>
+      <template #footer>
+        <el-button @click="changeSourceVisible = false">取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -276,6 +293,64 @@ const importSources = async () => {
     }
   } catch { }
 }
+// 换源
+const changeSourceVisible = ref(false)
+const changeSourceKey = ref('')
+const changeSourceBook = ref<Book | null>(null)
+const changeSourceResults = ref<any[]>([])
+let changeSourceWs: WebSocket | null = null
+
+const handleChangeSource = (book: Book | SeachBook) => {
+  changeSourceBook.value = book as Book
+  changeSourceKey.value = book.name
+  changeSourceResults.value = []
+  changeSourceVisible.value = true
+  searchChangeSource()
+}
+
+const searchChangeSource = () => {
+  if (changeSourceWs) { changeSourceWs.close(); changeSourceWs = null }
+  if (!changeSourceKey.value) return
+  changeSourceResults.value = []
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsPort = Number(location.port) + 1 || 1123
+  changeSourceWs = new WebSocket(`${protocol}//${location.hostname}:${wsPort}/searchBook`)
+  changeSourceWs.onopen = () => changeSourceWs!.send(JSON.stringify({ key: changeSourceKey.value }))
+  changeSourceWs.onmessage = (e) => {
+    try {
+      const d = JSON.parse(e.data)
+      if (Array.isArray(d)) {
+        d.forEach((item: any) => {
+          if (!changeSourceResults.value.some(r => r.origin === item.origin)) {
+            changeSourceResults.value.push(item)
+          }
+        })
+      }
+    } catch {}
+  }
+}
+
+const selectChangeSource = async (row: any) => {
+  if (!changeSourceBook.value) return
+  if (row.origin === changeSourceBook.value.origin) {
+    ElMessage.info('已经是当前书源')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `将书源切换为「${row.originName}」？\n当前进度将保留。`,
+      '确认换源', { type: 'info', confirmButtonText: '确定', cancelButtonText: '取消' }
+    )
+    const oldBook = changeSourceBook.value
+    const newBook = { ...oldBook, origin: row.origin, originName: row.originName, bookUrl: row.bookUrl, tocUrl: row.tocUrl || '' }
+    await API.deleteBook(oldBook)
+    await API.saveBook(newBook)
+    changeSourceVisible.value = false
+    ElMessage.success(`已切换到「${row.originName}」`)
+    store.loadBookShelf()
+  } catch {}
+}
+
 const handleDeleteBook = async (book: SeachBook | Book) => {
   try {
     await ElMessageBox.confirm(`确认从书架中删除《${book.name}》？`, '提示', {
