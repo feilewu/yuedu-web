@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  yuedu-web:
+    build: .
+    container_name: yuedu-web
+    ports:
+      - "1122:1122"
+    volumes:
+      - yuedu-data:/root/.yuedu-web
+    restart: unless-stopped
+    environment:
+      - YUEDU_PORT=1122
+      - TZ=Asia/Shanghai
+
+volumes:
+  yuedu-data:
