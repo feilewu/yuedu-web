@@ -1,0 +1,40 @@
+[versions]
+kotlin = "2.3.0"
+coroutines = "1.10.2"
+okhttp = "5.3.2"
+jsoup = "1.16.2"
+gson = "2.13.2"
+jsonPath = "2.10.0"
+jsoupxpath = "2.5.3"
+nanoHttpd = "2.3.1"
+rhino = "5.0.0"
+commonsText = "1.13.1"
+hutool = "5.8.22"
+sqlite = "3.49.1.0"
+logback = "1.5.16"
+slf4j = "2.0.17"
+
+[libraries]
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+json-path = { module = "com.jayway.jsonpath:json-path", version.ref = "jsonPath" }
+jsoupxpath = { module = "cn.wanghaomiao:JsoupXpath", version.ref = "jsoupxpath" }
+nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanoHttpd" }
+nanohttpd-websocket = { module = "org.nanohttpd:nanohttpd-websocket", version.ref = "nanoHttpd" }
+mozilla-rhino = { module = "org.htmlunit:htmlunit-core-js", version.ref = "rhino" }
+commons-text = { module = "org.apache.commons:commons-text", version.ref = "commonsText" }
+hutool-crypto = { module = "cn.hutool:hutool-crypto", version.ref = "hutool" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-sam = { id = "org.jetbrains.kotlin.plugin.sam.with.receiver", version.ref = "kotlin" }
+
+[bundles]
+coroutines = ["kotlinx-coroutines-core"]
