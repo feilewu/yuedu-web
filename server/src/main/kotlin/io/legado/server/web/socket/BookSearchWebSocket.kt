@@ -9,6 +9,8 @@ import io.legado.server.utils.isJson
 import io.legado.server.webBook.WebBook
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.io.IOException
 
 class BookSearchWebSocket(handshakeRequest: NanoHTTPD.IHTTPSession) :
@@ -17,6 +19,7 @@ class BookSearchWebSocket(handshakeRequest: NanoHTTPD.IHTTPSession) :
 
     private val normalClosure = NanoWSD.WebSocketFrame.CloseCode.NormalClosure
     private var job: Job? = null
+    private val concurrencyLimit = 20
 
     override fun onOpen() {
         job = launch(IO) {
@@ -55,13 +58,21 @@ class BookSearchWebSocket(handshakeRequest: NanoHTTPD.IHTTPSession) :
                         return@launch
                     }
                     val sources = BookSourceDao.findAllEnabled()
-                    for (source in sources) {
-                        try {
-                            val results = WebBook.searchBookAwait(source, key)
-                            if (results.isNotEmpty()) {
-                                send(GSON.toJson(results))
+                    val semaphore = Semaphore(concurrencyLimit)
+                    coroutineScope {
+                        for (source in sources) {
+                            launch(IO) {
+                                semaphore.withPermit {
+                                    try {
+                                        val results = WebBook.searchBookAwait(source, key)
+                                        if (results.isNotEmpty()) {
+                                            send(GSON.toJson(results))
+                                        }
+                                        } catch (_: Exception) { }
+                                            yield()
+                                }
                             }
-                        } catch (_: Exception) { }
+                        }
                     }
                     close(normalClosure, "Search finish", false)
                 } else {
