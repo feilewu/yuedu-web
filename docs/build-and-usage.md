@@ -34,26 +34,19 @@ cd yuedu-web
 
 ### 2. 构建 Web 前端
 
-前端源码在 Legado 项目的 `modules/web/` 目录中，需要先构建后再复制到 yuedu-web。
+前端源码在 `frontend/` 目录中。
 
 ```bash
-# 进入 Legado 项目的前端目录
-cd legadoT/modules/web
+cd yuedu-web/frontend
 
-# 安装依赖并构建
+# 安装依赖
 pnpm install
-pnpm build-only
 
-# 将构建产物复制到 yuedu-web
-mkdir -p /path/to/yuedu-web/web/vue
-cp -r dist/* /path/to/yuedu-web/web/vue/
+# 构建并复制到 web/vue/
+pnpm build
 ```
 
-或者也可以直接从运行中的 Legado Android 应用的 assets 中复制：
-
-```bash
-cp -r legadoT/app/src/main/assets/web/vue/* yuedu-web/web/vue/
-```
+构建完成后产物自动复制到 `web/vue/`，可直接启动服务。
 
 ---
 

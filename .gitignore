@@ -9,3 +9,6 @@ local.properties
 *.db-wal
 *.db-shm
 web/vue/
+frontend/node_modules/
+frontend/dist/
+frontend/pnpm-lock.yaml
