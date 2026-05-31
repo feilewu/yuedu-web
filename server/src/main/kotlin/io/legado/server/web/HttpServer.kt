@@ -61,6 +61,19 @@ class HttpServer(port: Int, private val webRoot: File, private val dataDir: File
                     val parameters = session.parameters
 
                     returnData = when (uri) {
+                        "/proxy" -> {
+                            val url = parameters["url"]?.firstOrNull()
+                            if (url.isNullOrEmpty()) ReturnData.error("url 参数为空")
+                            else try {
+                                val response = okhttp3.OkHttpClient().newCall(
+                                    okhttp3.Request.Builder().url(url).build()
+                                ).execute()
+                                val body = response.body?.string() ?: ""
+                                ReturnData.success(body)
+                            } catch (e: Exception) {
+                                ReturnData.error(e.localizedMessage ?: "proxy error")
+                            }
+                        }
                         "/getBookSource" -> BookSourceController.getSource(parameters)
                         "/getBookSources" -> BookSourceController.getSources()
                         "/getBookshelf" -> bookController.getBookshelf()

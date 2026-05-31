@@ -210,7 +210,7 @@ const buttons = ref<{ name: string; hotKeys: string[]; action: () => void }[]>(
     { name: '✓保存源', hotKeys: [], action: saveSource },
   ),
 )
-const hotkeysDialogVisible = ref(true)
+const hotkeysDialogVisible = ref(false)
 
 const recordKeyDowning = ref(false)
 

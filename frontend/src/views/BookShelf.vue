@@ -55,17 +55,25 @@
               {{ connectStatus }}
             </el-tag>
           </div>
+          <div class="setting-item" style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap">
+            <el-tag
+              size="large"
+              style="cursor: pointer"
+              @click="importSources"
+            >
+              导入书源
+            </el-tag>
+            <el-tag
+              size="large"
+              style="cursor: pointer"
+              @click="toSourceEditor"
+            >
+              管理书源
+            </el-tag>
+          </div>
         </div>
       </div>
       <div class="bottom-icons">
-        <a
-          href="https://github.com/gedoor/legado_web_bookshelf"
-          target="_blank"
-        >
-          <div class="bottom-icon">
-            <img :src="githubUrl" alt="" />
-          </div>
-        </a>
       </div>
     </div>
     <div class="shelf-wrapper" ref="shelfWrapper">
@@ -86,7 +94,7 @@ import { useBookStore } from '@/store'
 import githubUrl from '@/assets/imgs/github.png'
 import { useLoading } from '@/hooks/loading'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
-import { baseURL_localStorage_key } from '@/api/axios'
+import ajax, { baseURL_localStorage_key } from '@/api/axios'
 import API, {
   legado_http_entry_point,
   parseLeagdoHttpUrlWithDefault,
@@ -226,6 +234,48 @@ const setLegadoRetmoteUrl = () => {
 }
 
 const router = useRouter()
+const toSourceEditor = () => {
+  router.push('/sourceManage')
+}
+const importSources = async () => {
+  try {
+    const { value } = await ElMessageBox.prompt('粘贴书源 JSON 或输入远程 URL 导入', '导入书源', {
+      inputType: 'textarea',
+      inputPlaceholder: '粘贴书源 JSON 数组或输入以 http:// 开头的远程 URL',
+      confirmButtonText: '导入',
+      cancelButtonText: '取消',
+    })
+    if (!value) return
+    let sources
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      const { data } = await ajax.get('proxy?url=' + encodeURIComponent(value))
+      if (!data.isSuccess) {
+        ElMessage.error(data.errorMsg || '获取远程数据失败')
+        return
+      }
+      sources = JSON.parse(data.data)
+    } else {
+      sources = JSON.parse(value)
+    }
+    if (Array.isArray(sources)) {
+      const { data } = await ajax.post('saveBookSources', sources)
+      if (data.isSuccess) {
+        ElMessage.success(`成功导入 ${sources.length} 个书源`)
+      } else {
+        ElMessage.error(data.errorMsg || '导入失败')
+      }
+    } else if (sources && sources.bookSourceUrl) {
+      const { data } = await ajax.post('saveBookSource', sources)
+      if (data.isSuccess) {
+        ElMessage.success('成功导入 1 个书源')
+      } else {
+        ElMessage.error(data.errorMsg || '导入失败')
+      }
+    } else {
+      ElMessage.warning('无法识别的格式')
+    }
+  } catch { }
+}
 const handleDeleteBook = async (book: SeachBook | Book) => {
   try {
     await ElMessageBox.confirm(`确认从书架中删除《${book.name}》？`, '提示', {
